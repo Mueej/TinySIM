@@ -83,7 +83,7 @@ public:
         }
     }
 
-    int write (const int idx, const int data) {
+    void write (const int idx, const int data) {
         std::cout << "accessed memory" << std::endl;
         std::cout<< "time taken "<< memoryStalls()<< " clock cycles" << std::endl;
         arr[idx] = data;
@@ -115,7 +115,7 @@ public:
         return arr[idx].data;
     }
 
-    int write(const int idx, const int data) {
+    void write(const int idx, const int data) {
         hitCondition (idx, arr[idx].tag, arr[idx].valid); //checking the hit condition(2).......
         sleep(cycleTime);
         if (arr[idx].dirty == false) {
@@ -137,7 +137,6 @@ public:
 
 int main() {
     cache Cache(64);
-    char stop;
 
     int loopCount, cnt = 0;
     std::cout << "Enter loop count: ";
@@ -172,6 +171,5 @@ int main() {
             Cache.write(mem_add, newData);
             std::cout << "Updated value at address "<< mem_add << " is " << newData << std::endl;
         }
-
     }
 }

@@ -14,4 +14,5 @@ Ensure you have a C++ compiler installed (GCC/g++ or Clang).
 To compile the source code into an executable, use the following command in your terminal:
 
 ```bash
-g++ -Wall -std=c++17 main.cpp -o assignment
+g++ -Wall -std=c++17 TinySIM.cpp -o TinySIM
+./TinySIM
