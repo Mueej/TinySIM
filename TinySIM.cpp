@@ -147,7 +147,7 @@ int main() {
 
     while (cnt++ < loopCount) {
         int req_type = rand()%2; // read = 1, write = 0
-        int mem_add = rand()%10; // total 64 memory addresses
+        int mem_add = rand()%64; // total 64 memory addresses
 
         if (req_type == 1) { //read
 
@@ -158,7 +158,7 @@ int main() {
 
             int data = Cache.read(mem_add);
             std::cout << "Value at address "<< mem_add << " is " << data << std::endl;
-        } else {
+        } else { //write
 
             std::cout << std::endl;
             std::cout << cnt << " ";
