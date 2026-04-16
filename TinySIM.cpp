@@ -1,9 +1,18 @@
 /* Copyright 2026 Mueej Al Basit <mueejalbasit01@gmail.com>
-* COA Group Assignment:- Simple Cache controller simulation that never misses
-*/
+ * COA Group Assignment:- Simulating a Simple Cache Controller FSM
+ */
 
 #include <iostream>
 #include <unistd.h>
+#include <cstdlib>
+#include <ctime>
+
+enum State {
+    IDLE,
+    COMPARE_TAG,
+    ALLOCATE,
+    WRITE_BACK
+};
 
 struct block {
     bool valid;
@@ -13,59 +22,6 @@ struct block {
 };
 
 int cycleTime;
-
-bool hitCondition(int idx, int tag, bool valid) {
-    if (!(idx == tag && valid == true)) {
-        std::cout << "HOW IS THIS EVEN POSSIBLE????" << std::endl;
-        std::cout << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣶⣄⡀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣤⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣾⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡏⠙⢣⡄⢀⣤⡴⠿⠛⠋⠉⠀⠀⠀⠀⠀⠀⠈⠉⠻⢷⡦⣤⡀⠀⣴⠿⢻⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣇⣠⣴⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⢧⡤⢼⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢷⣽⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠷⣄⠙⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⠿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢳⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡾⠃⠀⠀⠀⠀⠀⠀⢀⣤⣴⣶⡲⠶⣦⣄⣀⡀⢀⣀⣴⣶⣶⣶⣤⣀⠀⠀⠀⠀⠀⠀⠙⢮⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠟⠁⠀⠀⠀⠀⠀⠀⣸⡟⠋⣽⣿⣿⣷⡄⠀⢹⠿⠻⡅⢀⣴⣿⣿⣯⠙⠻⣦⠀⠀⠀⠀⠀⠀⠳⡿⡄⠀⠀⠀⠀⢀⠄⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⡿⠘⠁⠀⠀⠀⠀⠀⠀⢻⣾⣆⠙⣿⣿⡿⠃⢠⡾⠀⠀⠻⣌⠛⢿⣿⡟⠃⢠⠇⠀⠀⠀⠀⠀⠀⠀⠙⣼⣤⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠿⠷⣶⣀⣠⣶⣿⣤⣤⣄⡀⠈⠳⢦⣤⣴⠶⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢎⢣⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⠿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⡿⠟⠉⠁⠀⠀⠉⠙⠷⣦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⣷⡄⠀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣀⣀⠀⠀⠀⠀⠀⠀⠀⣈⣻⣷⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠉⠙⢦⡀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⣠⡾⡋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⠿⢿⣿⣻⣶⣆⣀⣴⡶⠿⣿⠿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣄⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⢠⣾⠋⠠⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠈⢧⡀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⢰⣿⡿⠀⢰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠀⠀⠀⠀⠀⠀⠀⠀⣏⣇⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⢸⣿⡀⢰⡟⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⣴⡏⢿⡀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⢸⣿⣿⡟⠀⠀⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡿⠀⢸⡇⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⣿⣿⣿⡇⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠈⡇⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⢠⣿⣿⣿⣧⠀⠸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠒⠒⠒⠒⠶⠶⠦⠤⠤⠤⢤⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣿⡆⠀⢹⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⢸⣿⣿⣿⠹⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⢹⣇⢠⢻⡇⠀" << std::endl;
-        std::cout << "⠀⠀⢀⣾⣿⣿⡏⠀⢻⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣶⡿⠀⠀⢻⣇⠀⣧⠀" << std::endl;
-        std::cout << "⠀⠀⢸⣿⣿⣿⠀⠀⠀⠻⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⣿⡿⠁⠀⠀⢸⣿⡆⢸⡄" << std::endl;
-        std::cout << "⠀⠀⣸⡟⢿⣿⠀⠀⠀⠀⠙⢷⣀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⣶⣿⡿⠁⠀⠀⠀⡨⣿⡿⢞⡇" << std::endl;
-        std::cout << "⠀⠀⣿⠃⣿⣿⠀⠀⠀⠀⠀⠀⠻⢿⣧⣀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⣴⣾⣿⣿⡿⠋⠀⠀⠀⡠⠊⠃⣿⡇⡈⡇" << std::endl;
-        std::cout << "⠀⠀⣿⢀⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣶⣄⠀⢀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⣿⣿⡿⠋⠀⠀⠀⠀⠀⡀⣈⣾⣿⢔⢀⡇" << std::endl;
-        std::cout << "⠀⢀⣿⢈⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣷⣶⣭⣅⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣴⣿⠉⠀⠀⠀⠀⠀⠀⠔⠠⢌⣛⡏⢰⢛⡇" << std::endl;
-        std::cout << "⠀⢸⡟⢸⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡿⠈⣿⣿⡏⠛⠿⠶⣦⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⡶⠶⣿⣿⣿⣿⠿⣿⠀⠀⠀⠀⠀⠀⠀⡀⢐⣯⡓⠀⠀⢗⡇" << std::endl;
-        std::cout << "⠀⢸⡇⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡇⢠⣿⣿⠇⠀⠀⠀⠀⠉⠉⠙⠛⠛⠶⠶⣶⡶⡶⠶⠞⠛⠛⠉⠉⠀⠀⠀⢹⢿⣿⠟⠈⣿⠀⠀⠀⠀⠀⠀⠀⠬⣷⡓⠅⠀⠀⣯⡇" << std::endl;
-        std::cout << "⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡇⢸⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⡏⠀⠀⠀⠀⠀⠀⠀⠐⣳⡋⠂⠀⠀⣗⣟" << std::endl;
-        std::cout << "⠀⣸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡇⣸⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⠀⣸⡇⠀⠀⠀⠀⠀⠀⠀⢩⣽⡡⠀⠀⠀⡓⣟" << std::endl;
-        std::cout << "⢰⣿⣏⠙⢷⣄⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣧⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⡆⢹⠀⠀⠀⠀⠀⠀⠀⠀⢸⣶⠅⣠⠀⠀⡝⣗" << std::endl;
-        std::cout << "⢸⣿⣿⠁⣸⠻⣆⠀⠀⠀⠀⠀⠀⠀⠸⣿⣾⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣧⣾⠀⠀⠀⠀⠀⠀⠀⠀⣾⣗⡞⠁⠀⠀⢱⣻" << std::endl;
-        std::cout << "⣿⣿⣿⠀⢿⣷⣿⡄⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⡟⠀⠀⠀⠀⠀⠀⠀⠰⣿⠟⠀⠀⠀⠀⡉⡮" << std::endl;
-        std::cout << "⣿⣿⣿⠀⠘⡿⢿⣿⣦⠀⠀⠀⠀⠀⠀⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡏⣿⡇⠀⠀⠀⠀⠀⠀⠀⢠⣿⣀⡴⣦⠀⠀⡠⣯" << std::endl;
-        std::cout << "⢸⣿⣿⣧⣼⣄⠈⣿⣿⡆⠀⠀⠀⠀⠀⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⠁⣿⡇⠀⠀⠀⠀⠀⠀⠀⣿⣿⠋⠀⢸⠀⢠⡲⣿" << std::endl;
-        std::cout << "⠈⢻⣿⣿⣯⣿⣿⠿⣿⠇⠀⠀⠀⠀⠀⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⢐⣿⠃⠀⠀⠀⠀⠀⠀⣸⣿⠟⠀⢀⣇⣰⠟⣽⣿" << std::endl;
-        std::cout << "⠀⠀⠘⠻⣿⣷⣝⢻⡟⠀⠀⠀⠀⠀⠀⣿⡏⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⢸⣿⡄⠀⠀⠀⠀⠀⠀⠘⢁⣀⣘⣿⣿⡟⣰⣿⡿" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠘⠛⠛⠛⠋⠀⠀⠀⠀⠀⢀⣿⣧⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣿⠇⠀⠀⠀⠀⠀⠰⣤⣬⣭⣬⣿⣿⡿⠛⡁⠄" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⡿⢿⡿⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⠋⠙⣿⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⡷⠨⣵⣜⢦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⠇⠀⠀⠈⠻⢶⣦⣄⣀⣤⣤⣤⣤⣄⣀⠀⠀⠀⠀⠘⠁" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⠻⣿⣡⣤⠀⠈⣻⣷⣮⣟⣲⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⡛⠋⢨⣽⠻⣿⡦⣄⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡟⣹⣯⣿⣿⣿⡏⢹⣿⣿⣿⣿⣏⢹⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠛⠻⢶⣶⣖⡰⠇⢿⡄⢹⣷⣿⣝⠿⣄⢸⣿⡿⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣷⣿⣿⡿⠿⣿⣧⣼⣿⠿⢿⣿⣿⣶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠿⠷⠿⠾⠻⠿⠿⠿⠛⠉⠁⠀⠀⠀⠀" << std::endl;
-        std::cout << "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠁⠀⠀⠈⡉⠉⠁⠀⠀⢈⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⣀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀" << std::endl;
-        std::cout << std::endl;
-        sleep(cycleTime*10);
-        return false;
-    } else return true;
-}
 
 int memoryStalls() { // artificial stall to simulate memory access time
     int time = 5 + rand() % 2;
@@ -83,10 +39,16 @@ public:
         }
     }
 
-    void write (const int idx, const int data) {
-        std::cout << "accessed memory" << std::endl;
-        std::cout<< "time taken "<< memoryStalls()<< " clock cycles" << std::endl;
-        arr[idx] = data;
+    int read (const int address) {
+        std::cout << "    [Memory] Reading from address " << address << std::endl;
+        std::cout << "    [Memory] Time taken: " << memoryStalls() << " clock cycles" << std::endl;
+        return arr[address];
+    }
+
+    void write (const int address, const int data) {
+        std::cout << "    [Memory] Writing to address " << address << std::endl;
+        std::cout << "    [Memory] Time taken: " << memoryStalls() << " clock cycles" << std::endl;
+        arr[address] = data;
     }
 
     ~memory() {
@@ -97,46 +59,154 @@ public:
 
 class cache {
     block* arr;
-    memory mem;
+    memory* mem;
 public:
-    explicit cache(const int size) : mem(size) {
-        arr = new block[size];
-        for (int i = 0; i < size; i++) {
-            arr[i].valid = true;
+    explicit cache(const int cache_size, const int mem_size) {
+        mem = new memory(mem_size);
+        arr = new block[cache_size];
+        for (int i = 0; i < cache_size; i++) {
+            arr[i].valid = false;
             arr[i].data = 0;
-            arr[i].tag = i;
+            arr[i].tag = 0;
             arr[i].dirty = false;
         }
     }
 
-    int read(const int idx) const {
-        hitCondition (idx, arr[idx].tag, arr[idx].valid); //checking the hit condition.......
-        sleep(cycleTime);
-        return arr[idx].data;
+    int read(const int address) {
+        int index = address % 64;
+        int tag = address / 64;
+        State state = IDLE;
+        bool done = false;
+        int result_data = 0;
+
+        while (!done) {
+            switch(state) {
+                case IDLE:
+                    std::cout << "  State: IDLE -> COMPARE_TAG\n";
+                    state = COMPARE_TAG;
+                    break;
+
+                case COMPARE_TAG:
+                    std::cout << "  State: COMPARE_TAG\n";
+                    sleep(cycleTime); // cache access
+                    if (arr[index].valid && arr[index].tag == tag) {
+                        std::cout << "    [Cache Hit]\n";
+                        result_data = arr[index].data;
+                        done = true; // transitions to IDLE logically
+                    } else {
+                        std::cout << "    [Cache Miss]\n";
+                        if (arr[index].valid && arr[index].dirty) {
+                            std::cout << "    [Dirty block found, transitioning to WRITE_BACK]\n";
+                            state = WRITE_BACK;
+                        } else {
+                            std::cout << "    [Transitioning to ALLOCATE]\n";
+                            state = ALLOCATE;
+                        }
+                    }
+                    break;
+
+                case WRITE_BACK:
+                    std::cout << "  State: WRITE_BACK\n";
+                    {
+                        int old_address = arr[index].tag * 64 + index;
+                        mem->write(old_address, arr[index].data);
+                        arr[index].dirty = false;
+                        std::cout << "    [Transitioning to ALLOCATE]\n";
+                        state = ALLOCATE;
+                    }
+                    break;
+
+                case ALLOCATE:
+                    std::cout << "  State: ALLOCATE\n";
+                    {
+                        int fetched_data = mem->read(address);
+                        arr[index].data = fetched_data;
+                        arr[index].tag = tag;
+                        arr[index].valid = true;
+                        arr[index].dirty = false;
+                        std::cout << "    [Transitioning to COMPARE_TAG]\n";
+                        state = COMPARE_TAG;
+                    }
+                    break;
+            }
+        }
+        return result_data;
     }
 
-    void write(const int idx, const int data) {
-        hitCondition (idx, arr[idx].tag, arr[idx].valid); //checking the hit condition(2).......
-        sleep(cycleTime);
-        if (arr[idx].dirty == false) {
-            arr[idx].dirty = true;
-            arr[idx].data = data;
-        } else {
-            mem.write(idx, data);
-            arr[idx].dirty = false;
-            arr[idx].data = data;
+    void write(const int address, const int data) {
+        int index = address % 64;
+        int tag = address / 64;
+        State state = IDLE;
+        bool done = false;
+
+        while (!done) {
+            switch(state) {
+                case IDLE:
+                    std::cout << "  State: IDLE -> COMPARE_TAG\n";
+                    state = COMPARE_TAG;
+                    break;
+
+                case COMPARE_TAG:
+                    std::cout << "  State: COMPARE_TAG\n";
+                    sleep(cycleTime); // cache access
+                    if (arr[index].valid && arr[index].tag == tag) {
+                        std::cout << "    [Cache Hit]\n";
+                        arr[index].data = data;
+                        arr[index].dirty = true;
+                        done = true; // transitions to IDLE
+                    } else {
+                        std::cout << "    [Cache Miss]\n";
+                        if (arr[index].valid && arr[index].dirty) {
+                            std::cout << "    [Dirty block found, transitioning to WRITE_BACK]\n";
+                            state = WRITE_BACK;
+                        } else {
+                            std::cout << "    [Transitioning to ALLOCATE]\n";
+                            state = ALLOCATE;
+                        }
+                    }
+                    break;
+
+                case WRITE_BACK:
+                    std::cout << "  State: WRITE_BACK\n";
+                    {
+                        int old_address = arr[index].tag * 64 + index;
+                        mem->write(old_address, arr[index].data);
+                        arr[index].dirty = false;
+                        std::cout << "    [Transitioning to ALLOCATE]\n";
+                        state = ALLOCATE;
+                    }
+                    break;
+
+                case ALLOCATE:
+                    std::cout << "  State: ALLOCATE\n";
+                    {
+                        int fetched_data = mem->read(address);
+                        arr[index].data = fetched_data;
+                        arr[index].tag = tag;
+                        arr[index].valid = true;
+                        arr[index].dirty = false;
+                        std::cout << "    [Transitioning to COMPARE_TAG]\n";
+                        state = COMPARE_TAG;
+                    }
+                    break;
+            }
         }
     }
 
     ~cache() {
         delete[] arr;
+        delete mem;
         std::cout << "deleted cache" << std::endl;
     }
-
 };
 
 int main() {
-    cache Cache(64);
+    srand(time(NULL));
+
+    // 64 block cache will be used and memory size will be 256 blocks.
+    int CACHE_SIZE = 64;
+    int MEM_SIZE = 256;
+    cache Cache(CACHE_SIZE, MEM_SIZE);
 
     int loopCount, cnt = 0;
     std::cout << "Enter loop count: ";
@@ -146,30 +216,24 @@ int main() {
     std::cin >> cycleTime;
 
     while (cnt++ < loopCount) {
-        int req_type = rand()%2; // read = 1, write = 0
-        int mem_add = rand()%64; // total 64 memory addresses
+        int req_type = rand() % 2; // read = 1, write = 0
+        int mem_add = rand() % 256; // total 256 memory addresses
 
-        if (req_type == 1) { //read
-
-            std::cout << std::endl;
-            std::cout << cnt << " ";
-            std::cout << "=================== READ ===================" << std::endl;
-            std::cout << std::endl;
+        if (req_type == 1) { // read
+            std::cout << "\n" << cnt << " =================== READ ===================\n";
+            std::cout << "Requesting to read address " << mem_add << "\n";
 
             int data = Cache.read(mem_add);
-            std::cout << "Value at address "<< mem_add << " is " << data << std::endl;
-        } else { //write
-
-            std::cout << std::endl;
-            std::cout << cnt << " ";
-            std::cout << "=================== WRITE ==================" << std::endl;
-            std::cout << std::endl;
-
-            int newData = rand()%10000;
-            std::cout << "Selected new value: " << newData << std::endl;
+            std::cout << "Value at address " << mem_add << " is " << data << std::endl;
+        } else { // write
+            std::cout << "\n" << cnt << " =================== WRITE ==================\n";
+            int newData = rand() % 10000;
+            std::cout << "Requesting to write value " << newData << " to address " << mem_add << "\n";
 
             Cache.write(mem_add, newData);
-            std::cout << "Updated value at address "<< mem_add << " is " << newData << std::endl;
+            std::cout << "Updated value at address " << mem_add << " to " << newData << std::endl;
         }
     }
+
+    return 0;
 }

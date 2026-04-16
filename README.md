@@ -1,6 +1,6 @@
-# COA Assignment - Simulating a Simple Cache Controller
+# COA Assignment - Simulating a Simple Cache Controller FSM
 
-Simple Cache controller simulation that never misses
+This project simulates a cache controller that uses a Finite State Machine (FSM) to decide the necessary actions during memory read and write operations. The FSM handles states such as `IDLE`, `COMPARE_TAG`, `ALLOCATE`, and `WRITE_BACK` to emulate a realistic cache with misses and write-backs.
 
 ## Prerequisites
 Ensure you have a C++ compiler installed (GCC/g++ or Clang).
